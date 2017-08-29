@@ -25,7 +25,7 @@ var BufSize uint = 8192
 type GraylogHook struct {
 	Extra       map[string]interface{}
 	Host        string
-	Level       logrus.Level
+	levels      []logrus.Level
 	gelfLogger  *Writer
 	buf         chan graylogEntry
 	wg          sync.WaitGroup
@@ -42,7 +42,7 @@ type graylogEntry struct {
 }
 
 // NewGraylogHook creates a hook to be added to an instance of logger.
-func NewGraylogHook(addr string, extra map[string]interface{}) *GraylogHook {
+func NewGraylogHook(addr string, extra map[string]interface{}, levels ...logrus.Level) *GraylogHook {
 	g, err := NewWriter(addr)
 	if err != nil {
 		logrus.WithError(err).Error("Can't create Gelf logger")
@@ -56,7 +56,7 @@ func NewGraylogHook(addr string, extra map[string]interface{}) *GraylogHook {
 	hook := &GraylogHook{
 		Host:        host,
 		Extra:       extra,
-		Level:       logrus.DebugLevel,
+		levels:      levels,
 		gelfLogger:  g,
 		synchronous: true,
 	}
@@ -66,7 +66,7 @@ func NewGraylogHook(addr string, extra map[string]interface{}) *GraylogHook {
 // NewAsyncGraylogHook creates a hook to be added to an instance of logger.
 // The hook created will be asynchronous, and it's the responsibility of the user to call the Flush method
 // before exiting to empty the log queue.
-func NewAsyncGraylogHook(addr string, extra map[string]interface{}) *GraylogHook {
+func NewAsyncGraylogHook(addr string, extra map[string]interface{}, levels ...logrus.Level) *GraylogHook {
 	g, err := NewWriter(addr)
 	if err != nil {
 		logrus.WithError(err).Error("Can't create Gelf logger")
@@ -80,7 +80,7 @@ func NewAsyncGraylogHook(addr string, extra map[string]interface{}) *GraylogHook
 	hook := &GraylogHook{
 		Host:       host,
 		Extra:      extra,
-		Level:      logrus.DebugLevel,
+		levels:     levels,
 		gelfLogger: g,
 		buf:        make(chan graylogEntry, BufSize),
 	}
@@ -216,13 +216,7 @@ func (hook *GraylogHook) sendEntry(entry graylogEntry) {
 
 // Levels returns the available logging levels.
 func (hook *GraylogHook) Levels() []logrus.Level {
-	levels := []logrus.Level{}
-	for _, level := range logrus.AllLevels {
-		if level <= hook.Level {
-			levels = append(levels, level)
-		}
-	}
-	return levels
+	return hook.levels
 }
 
 // Blacklist create a blacklist map to filter some message keys.

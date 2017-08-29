@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	pkgerrors "github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const SyslogInfoLevel = 6
@@ -23,7 +23,7 @@ func TestWritingToUDP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewReader: %s", err)
 	}
-	hook := NewGraylogHook(r.Addr(), map[string]interface{}{"foo": "bar"})
+	hook := NewGraylogHook("192.168.1.101:12202", map[string]interface{}{"foo": "bar"})
 	hook.Host = "testing.local"
 	hook.Blacklist([]string{"filterMe"})
 	msgData := "test message\nsecond line"
